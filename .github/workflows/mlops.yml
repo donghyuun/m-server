@@ -2,7 +2,7 @@ name: ML Experiment & Model Deploy
 'on':
   push:
     branches:
-     - main
+     - other
   pull_request:
     branches:
      - main
