@@ -3,15 +3,12 @@ name: Java CICD
   push:
     branches:
      - main
-  workflow_dispatch: {
-    }
+  workflow_dispatch: {}
 # x_name: 워크플로우 기본 설정
 # x_description: GitHub Actions 워크플로우 이름과 트리거 조건을 설정하는 블록입니다.
 jobs:
   job1:
     runs-on: ubuntu-latest
-    jobs: {
-      }
 #     x_name: Job 설정 (Build & Test) - 수정
 #     x_description: 소스 체크아웃, JDK 설정, Gradle 빌드/테스트
     steps:
