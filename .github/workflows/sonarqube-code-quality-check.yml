@@ -1,0 +1,81 @@
+name: Code Quality Check (SonarQube)
+'on':
+  push:
+    branches:
+     - main
+  pull_request:
+    branches:
+     - main
+  workflow_dispatch: {
+    }
+# x_name: 워크플로우 기본 설정
+# x_description: 정적 코드 품질 검증 워크플로우 트리거 (SonarQube)
+jobs:
+  build:
+    runs-on: ubuntu-latest
+#     x_name: Job 설정 (Build)
+#     x_description: 코드 체크아웃 및 기본 개발 환경 준비
+    steps:
+     -
+      name: Checkout repository
+      uses: actions/checkout@v4
+#       x_name: Checkout repository
+#       x_description: 소스 체크아웃
+#       x_domain: github
+#       x_task:
+#        - checkout
+     -
+      name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+#       x_name: Set up JDK 17
+#       x_description: JDK 17 환경 셋업
+#       x_domain: java
+#       x_task:
+#        - setup
+     -
+      name: Install Dependencies
+      run: ./gradlew clean assemble
+#       x_name: Dependency Install
+#       x_description: 의존성 설치 (Gradle)
+#       x_domain: build
+#       x_task:
+#        - install
+  sonarqube:
+    needs:
+     - build
+    runs-on: ubuntu-latest
+#     x_name: Job 설정 (Code Quality, SonarQube)
+#     x_description: 소나큐브를 통한 코드 정적 분석 및 품질 검증
+    steps:
+     -
+      name: SonarQube Scan
+      uses: sonarsource/sonarqube-scan-action@v2
+      with:
+        args: -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.host.url=$SONAR_HOST_URL
+        projectBaseDir: ./
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+#       x_name: SonarQube Scan
+#       x_description: 소나큐브 스캐너를 활용한 코드 품질 점검
+#       x_domain: sonarqube
+#       x_task:
+#        - scan
+     -
+      name: SonarQube Quality Gate
+      uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
+      with:
+        projectKey: ${{ secrets.SONAR_PROJECT_KEY }}
+        sonarHostUrl: ${{ secrets.SONAR_HOST_URL }}
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#       x_name: Check Quality Gate
+#       x_description: 소나큐브 품질 게이트 통과 여부 확인
+#       x_domain: sonarqube
+#       x_task:
+#        - gate
+# 
