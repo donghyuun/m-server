@@ -1,0 +1,93 @@
+name: ML Experiment & Model Deploy
+'on':
+  push:
+    branches:
+     - main
+  pull_request:
+    branches:
+     - main
+  workflow_dispatch: {
+    }
+# x_name: 워크플로우 기본 설정
+# x_description: ML 코드/데이터 변경 시 실험 및 모델 배포 파이프라인 트리거
+jobs:
+  train:
+    runs-on: ubuntu-latest
+#     x_name: Job 설정 (Model Training)
+#     x_description: 모델 학습 및 검증 환경 준비, 데이터셋 다운로드, 모델 학습 실행
+    steps:
+     -
+      name: Checkout repository
+      uses: actions/checkout@v4
+#       x_name: Checkout repository
+#       x_description: 저장소 코드 체크아웃
+#       x_domain: github
+#       x_task:
+#        - checkout
+     -
+      name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+#       x_name: Set up Python 3.10
+#       x_description: Python 3.10 환경 셋업
+#       x_domain: python
+#       x_task:
+#        - setup
+     -
+      name: Install dependencies
+      run: pip install -r requirements.txt
+#       x_name: Install dependencies
+#       x_description: 프로젝트 의존성 설치
+#       x_domain: python
+#       x_task:
+#        - install
+     -
+      name: Train model
+      run: python train.py
+#       x_name: Run Training Script
+#       x_description: 모델 학습 스크립트 실행
+#       x_domain: python
+#       x_task:
+#        - train
+     -
+      name: Eval model
+      run: python evaluate.py
+#       x_name: Evaluate Model
+#       x_description: 학습된 모델 평가
+#       x_domain: python
+#       x_task:
+#        - eval
+  deploy:
+    needs:
+     - train
+    runs-on: ubuntu-latest
+#     x_name: Job 설정 (Model Deploy)
+#     x_description: 학습된 모델을 Docker 이미지로 패키징 후 배포
+    steps:
+     -
+      name: Build Docker image
+      run: docker build -t ghcr.io/${{ github.repository }}/ml-model:latest .
+#       x_name: Build Docker Image
+#       x_description: 학습된 모델을 포함한 Docker 이미지 빌드
+#       x_domain: docker
+#       x_task:
+#        - build
+     -
+      name: Login to GHCR
+      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor
+        }} --password-stdin
+#       x_name: Login to GitHub Container Registry
+#       x_description: GitHub Container Registry 로그인
+#       x_domain: docker
+#       x_task:
+#        - login
+     -
+      name: Push image
+      run: docker push ghcr.io/${{ github.repository }}/ml-model:latest
+#       x_name: Push Docker Image
+#       x_description: 빌드된 이미지 푸시
+#       x_domain: docker
+#       x_task:
+#        - push
+# 
