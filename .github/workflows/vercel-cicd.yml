@@ -1,0 +1,131 @@
+name: Vercel Deployment
+'on':
+  push:
+    branches:
+     - main
+  workflow_dispatch: {
+    }
+# x_name: 워크플로우 기본 설정
+# x_description: Vercel 배포 워크플로우 트리거 (main push & 수동 실행)
+jobs:
+  build:
+    runs-on: ubuntu-latest
+#     x_name: Job 설정 (Build)
+#     x_description: Node.js 빌드를 위한 job 설정
+    steps:
+     -
+      name: Checkout repository
+      uses: actions/checkout@v4
+#       x_name: Checkout repository
+#       x_description: 저장소 코드를 체크아웃
+#       x_domain: github
+#       x_task:
+#        - checkout
+     -
+      name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        cache: pnpm
+        node-version: '20'
+#       x_name: Use Node.js 20
+#       x_description: Node.js 20 환경 설정
+#       x_domain: node
+#       x_task:
+#        - setup
+     -
+      name: Enable Corepack
+      run: corepack enable
+#       x_name: Enable Corepack (pnpm)
+#       x_description: pnpm 사용을 위한 Corepack 활성화
+#       x_domain: node
+#       x_task:
+#        - setup
+     -
+      name: Install Vercel CLI
+      run: npm i -g vercel@latest
+#       x_name: Install Vercel CLI
+#       x_description: Vercel CLI 설치
+#       x_domain: vercel
+#       x_task:
+#        - setup
+  preview:
+    runs-on: ubuntu-latest
+    needs:
+     - build
+    if: github.event_name == 'pull_request'
+#     x_name: Job 설정 (Preview)
+#     x_description: PR 이벤트에서 Preview 배포
+    steps:
+     -
+      name: Vercel pull (preview)
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      run: vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
+#       x_name: Vercel pull (preview)
+#       x_description: Preview 환경 설정 pull
+#       x_domain: vercel
+#       x_task:
+#        - pull
+     -
+      name: Vercel build (preview)
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      run: vercel build --token=$VERCEL_TOKEN
+#       x_name: Vercel build (preview)
+#       x_description: Preview 빌드
+#       x_domain: vercel
+#       x_task:
+#        - build
+     -
+      name: Vercel deploy (preview)
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      run: vercel deploy --prebuilt --token=$VERCEL_TOKEN
+#       x_name: Vercel deploy (preview)
+#       x_description: Preview 배포
+#       x_domain: vercel
+#       x_task:
+#        - deploy-preview
+  production:
+    runs-on: ubuntu-latest
+    needs:
+     - build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+#     x_name: Job 설정 (Production)
+#     x_description: main 브랜치 푸시 시 Production 배포
+    steps:
+     -
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
+      name: Vercel pull (prod)
+#       x_name: Vercel pull (prod)
+#       x_description: Production 환경 설정 pull
+#       x_domain: vercel
+#       x_task:
+#        - pull
+     -
+      name: Vercel build (prod)
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      run: vercel build --prod --token=$VERCEL_TOKEN
+#       x_name: Vercel build (prod)
+#       x_description: Production 빌드
+#       x_domain: vercel
+#       x_task:
+#        - build
+     -
+      name: Vercel deploy (prod)
+      env:
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      run: vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+#       x_name: Vercel deploy (prod)
+#       x_description: Production 배포
+#       x_domain: vercel
+#       x_task:
+#        - deploy-prod
+# 
